@@ -18,7 +18,7 @@ Good Deck turns your content (outlines, notes, stats) into a self-contained `ind
 Requires [Node.js](https://nodejs.org/).
 
 ```bash
-npx skills add https://github.com/ajotwani/good-deck --skill good-deck
+npx skills add https://github.com/ajot/good-deck --skill good-deck
 ```
 
 ## Usage
