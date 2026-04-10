@@ -6,11 +6,12 @@ An [Agent Skill](https://agentskills.io) that helps AI coding assistants build p
 
 Good Deck turns your content (outlines, notes, stats) into a self-contained `index.html` presentation with:
 
-- Keyboard navigation (arrows, space, G to jump)
-- Animated slide transitions
+- Keyboard navigation (arrows, space, G to jump, O for overview grid)
+- Animated slide transitions with staggered entry
 - CSS theming via variables
 - Built-in practice mode with talk track (P key)
 - Speaker avatars and Slide 0 (navigation info)
+- Optional live API demo containers with copy-to-clipboard and JSON toggle
 - Optional Flask wrapper for password-protected hosting
 
 ## Install
@@ -40,6 +41,23 @@ Paste this prompt after installing to see it in action:
 > 5. The compound effect of shipping small things
 > 6. Common pitfalls and how to avoid them
 > 7. Closing slide: "Just start. Ship it. Iterate."
+
+## Structure
+
+```
+good-deck/
+  SKILL.md                          # Core instructions (~200 lines)
+  assets/
+    starter.html                    # Ready-to-go deck template
+  references/
+    practice-mode.md                # Talk track panel details
+    slide-components.md             # Stat cards, badges, quotes, timelines
+    live-demos.md                   # Interactive API demo containers
+    advanced-components.md          # Comparison panels, cost bars, journey tracks
+    deployment.md                   # Flask wrapper, Docker, auth
+```
+
+The agent loads `SKILL.md` on every run and pulls in references on demand — only what the task needs.
 
 ## Compatibility
 

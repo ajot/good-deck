@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Title</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Lexend:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #0f0f0f;
+  --bg-surface: rgba(255, 255, 255, 0.05);
+  --bg-elevated: rgba(255, 255, 255, 0.08);
+  --accent: #3b82f6;
+  --accent-light: #60a5fa;
+  --accent-glow: rgba(59, 130, 246, 0.25);
+  --accent-subtle: rgba(59, 130, 246, 0.08);
+  --success: #22c55e;
+  --warning: #eab308;
+  --text-primary: #f1f5f9;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --border: rgba(255, 255, 255, 0.1);
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-text: #1a1a2e;
+  --card-text-muted: #5a5a7a;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Lexend', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== SLIDE SYSTEM ===== */
+.deck {
+  width: 100vw; height: 100vh; position: relative;
+  transition: width 0.35s ease;
+}
+body.practice-open .deck { width: calc(100vw - 420px); }
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: flex-start; align-items: flex-start;
+  padding: 72px 80px 100px;
+  opacity: 0; transform: translateX(80px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  pointer-events: none; text-align: left;
+}
+.slide.slide-centered { justify-content: center; align-items: center; text-align: center; }
+.slide.slide-title { justify-content: center; align-items: flex-start; }
+.slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+.slide.exit-left { opacity: 0; transform: translateX(-80px); }
+.slide.exit-right { opacity: 0; transform: translateX(80px); }
+
+/* ===== ANIMATIONS ===== */
+.animate-in {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.slide.active .animate-in { opacity: 1; transform: translateY(0); }
+.slide.active .animate-in:nth-child(1) { transition-delay: 0.1s; }
+.slide.active .animate-in:nth-child(2) { transition-delay: 0.25s; }
+.slide.active .animate-in:nth-child(3) { transition-delay: 0.4s; }
+.slide.active .animate-in:nth-child(4) { transition-delay: 0.55s; }
+.slide.active .animate-in:nth-child(5) { transition-delay: 0.7s; }
+.slide.active .animate-in:nth-child(6) { transition-delay: 0.85s; }
+.slide.active .animate-in:nth-child(7) { transition-delay: 1.0s; }
+.slide.active .animate-in:nth-child(8) { transition-delay: 1.15s; }
+
+/* ===== TYPOGRAPHY ===== */
+.headline { font-family: var(--font-display); font-size: 72px; font-weight: 800; line-height: 1.1; }
+.headline-md { font-family: var(--font-display); font-size: 56px; font-weight: 800; line-height: 1.15; }
+.headline-sm { font-family: var(--font-display); font-size: 40px; font-weight: 700; line-height: 1.2; }
+.title-main { font-family: var(--font-display); font-size: 64px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+.title-sub { font-size: 22px; color: var(--text-secondary); margin-top: 12px; }
+.subtitle { font-size: 22px; color: var(--text-secondary); line-height: 1.5; max-width: 700px; margin-top: 16px; }
+.label { font-family: var(--font-mono); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent-light); margin-bottom: 16px; }
+.text-accent { color: var(--accent-light); }
+.text-muted { color: var(--text-muted); }
+.big-quote { font-family: var(--font-display); font-size: 48px; font-weight: 700; line-height: 1.3; max-width: 800px; }
+
+/* ===== SPEAKER ===== */
+.speaker-row { display: flex; gap: 48px; margin-top: 16px; }
+.speaker { display: flex; align-items: center; gap: 16px; }
+.speaker-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, 0.2); }
+.speaker-name { font-family: var(--font-body); font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.speaker-title { font-family: var(--font-body); font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* ===== CARDS ===== */
+.card-grid { display: grid; gap: 20px; max-width: 900px; width: 100%; }
+.card-grid-2 { grid-template-columns: 1fr 1fr; }
+.card-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.card {
+  background: var(--card-bg); color: var(--card-text);
+  border-radius: 16px; padding: 28px 24px; text-align: left;
+}
+.card h3 { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.card p { font-size: 15px; line-height: 1.5; color: var(--card-text-muted); }
+.card-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 8px; }
+.card-highlight { border: 2px solid var(--accent); }
+
+/* ===== UI CHROME ===== */
+.progress-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 2px; background: transparent; z-index: 100; }
+.progress-fill { height: 100%; width: 0; background: var(--accent); opacity: 0.4; transition: width 0.4s ease; }
+
+.slide-counter {
+  position: fixed; bottom: 24px; right: 32px;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); color: white;
+  font-family: var(--font-body); font-size: 14px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; cursor: pointer;
+  transition: right 0.35s ease;
+}
+body.practice-open .slide-counter { right: 452px; }
+
+.slide-footer { position: fixed; bottom: 24px; left: 32px; z-index: 100; }
+.slide-footer-logo { height: 56px; width: auto; }
+
+.nav-hint {
+  position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 13px;
+  color: var(--text-muted); z-index: 100; transition: opacity 0.5s;
+}
+.nav-hint.hidden { opacity: 0; pointer-events: none; }
+
+/* Jump overlay */
+.jump-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 200;
+}
+.jump-overlay.visible { opacity: 1; pointer-events: auto; }
+.jump-box {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: 16px; padding: 48px 64px; text-align: center;
+}
+.jump-label { font-family: var(--font-mono); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-bottom: 16px; }
+.jump-number { font-family: var(--font-mono); font-size: 72px; font-weight: 700; color: var(--accent-light); }
+.jump-hint { font-size: 13px; color: var(--text-muted); margin-top: 16px; font-family: var(--font-mono); }
+
+/* Overview grid */
+.overview-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(12px);
+  z-index: 250; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease; overflow-y: auto; padding: 40px;
+}
+.overview-overlay.visible { opacity: 1; pointer-events: auto; }
+.overview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.overview-title { font-family: var(--font-display); font-size: 24px; font-weight: 700; }
+.overview-close { background: none; border: none; color: var(--text-muted); font-size: 28px; cursor: pointer; padding: 4px 12px; border-radius: 6px; }
+.overview-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.overview-thumb { background: rgba(255, 255, 255, 0.04); border: 2px solid transparent; border-radius: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s; overflow: hidden; }
+.overview-thumb:hover { border-color: var(--accent); background: rgba(0, 105, 255, 0.08); }
+.overview-thumb.current { border-color: var(--accent); background: rgba(0, 105, 255, 0.12); }
+.overview-thumb-preview { width: 100%; aspect-ratio: 16/9; overflow: hidden; position: relative; background: var(--bg-deep); border-radius: 8px 8px 0 0; }
+.overview-thumb-preview .slide-mini { width: 1280px; height: 720px; transform: scale(0.172); transform-origin: top left; pointer-events: none; position: absolute; top: 0; left: 0; }
+.overview-thumb-info { padding: 12px 14px; }
+.overview-thumb-num { font-family: var(--font-mono); font-size: 12px; color: var(--accent-light); margin-bottom: 4px; }
+.overview-thumb-title { font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--text-secondary); line-height: 1.4; }
+
+/* ===== PRACTICE MODE ===== */
+.practice-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 420px;
+  background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 150; transform: translateX(100%); transition: transform 0.35s ease;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.practice-panel.open { transform: translateX(0); }
+.practice-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0; }
+.practice-header-title { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); }
+.practice-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+.practice-close:hover { color: var(--text-primary); background: rgba(255,255,255,0.08); }
+.practice-body { padding: 24px; overflow-y: auto; flex: 1; font-family: var(--font-body); font-size: 15px; line-height: 1.8; color: var(--text-secondary); }
+.practice-body strong { color: var(--text-primary); font-weight: 600; }
+.practice-body em { background: rgba(0, 105, 255, 0.2); color: var(--accent-light); font-style: normal; padding: 1px 4px; border-radius: 3px; display: inline; box-decoration-break: clone; }
+.practice-body .stage-note { display: block; margin: 12px 0; padding: 8px 12px; border-left: 3px solid #f5a623; background: rgba(245, 166, 35, 0.08); border-radius: 0 6px 6px 0; font-size: 13px; color: #f5a623; font-style: italic; }
+.practice-body .talk-line { margin-bottom: 12px; padding-left: 20px; position: relative; }
+.practice-body .talk-line::before { content: '›'; color: var(--accent-light); font-weight: 700; font-size: 18px; position: absolute; left: 0; top: 0; line-height: 1.5; }
+.practice-slide-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent-light); margin-bottom: 16px; }
+.practice-hint { padding: 16px 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); flex-shrink: 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+<!-- ========== SLIDE 0: Navigation ========== -->
+<section class="slide slide-centered">
+  <div style="font-family: var(--font-mono); font-size: 14px; color: var(--text-muted); line-height: 2.2;" class="animate-in">
+    <span style="color: var(--text-secondary);">&larr; &rarr;</span> &nbsp;Navigate &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">Space</span> &nbsp;Next &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">G</span> &nbsp;Jump to slide &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">P</span> &nbsp;Practice mode &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">O</span> &nbsp;Overview &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">Click</span> &nbsp;Left = back, rest = forward
+  </div>
+</section>
+
+<!-- ========== SLIDE 1: Title ========== -->
+<section class="slide slide-centered">
+  <div class="title-main animate-in">Your Title Here<br><span class="text-accent">Subtitle Line</span></div>
+  <div class="title-sub animate-in">One-line description of the talk</div>
+  <div class="speaker-row animate-in">
+    <div class="speaker">
+      <img src="images/speaker.jpg" class="speaker-avatar" alt="Speaker Name">
+      <div>
+        <div class="speaker-name">Speaker Name</div>
+        <div class="speaker-title">Title, Company</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SLIDE 2: Example Content ========== -->
+<section class="slide slide-centered">
+  <div class="label animate-in">Section Label</div>
+  <h2 class="headline animate-in">Big headline<br><span class="text-accent">with accent.</span></h2>
+  <p class="subtitle animate-in">Supporting text that explains the headline in one or two sentences.</p>
+</section>
+
+<!-- ========== SLIDE 3: Card Grid Example ========== -->
+<section class="slide slide-centered">
+  <div class="label animate-in">Key Points</div>
+  <h2 class="headline-sm animate-in">Three things to know.</h2>
+  <div class="card-grid card-grid-3 animate-in" style="margin-top: 28px;">
+    <div class="card">
+      <div class="card-label">Point 1</div>
+      <h3>First Thing</h3>
+      <p>Description of the first key point.</p>
+    </div>
+    <div class="card">
+      <div class="card-label">Point 2</div>
+      <h3>Second Thing</h3>
+      <p>Description of the second key point.</p>
+    </div>
+    <div class="card card-highlight">
+      <div class="card-label">Point 3</div>
+      <h3>Third Thing</h3>
+      <p>The most important point, highlighted.</p>
+    </div>
+  </div>
+</section>
+
+</div><!-- end .deck -->
+
+<!-- Progress Bar -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- Footer -->
+<div class="slide-footer">
+  <!-- <img src="images/logo.png" alt="Logo" class="slide-footer-logo"> -->
+</div>
+
+<!-- Slide Counter -->
+<div class="slide-counter" id="slideCounter" onclick="showJump()"></div>
+
+<!-- Nav Hint -->
+<div class="nav-hint" id="navHint">Arrow keys to navigate · G to jump · P to practice · O for overview</div>
+
+<!-- Jump Overlay -->
+<div class="jump-overlay" id="jumpOverlay">
+  <div class="jump-box">
+    <div class="jump-label">Go to slide</div>
+    <div class="jump-number" id="jumpInput">_</div>
+    <div class="jump-hint">Type a number, then Enter · Esc to cancel</div>
+  </div>
+</div>
+
+<!-- Overview Grid -->
+<div class="overview-overlay" id="overviewOverlay">
+  <div class="overview-header">
+    <div class="overview-title">All Slides</div>
+    <button class="overview-close" onclick="hideOverview()">&times;</button>
+  </div>
+  <div class="overview-grid" id="overviewGrid"></div>
+</div>
+
+<!-- Practice Panel -->
+<div class="practice-panel" id="practicePanel">
+  <div class="practice-header">
+    <span class="practice-header-title">Talk Track</span>
+    <button class="practice-close" onclick="togglePractice()">&times;</button>
+  </div>
+  <div class="practice-body" id="practiceBody"></div>
+  <div class="practice-hint">Press P to toggle</div>
+</div>
+
+<script>
+// ===== TALK TRACK =====
+const talkTrack = {
+  0: `<span class="stage-note">Navigation slide. Don't linger.</span>`,
+  1: `<div class="talk-line">"Welcome everyone..."</div>
+<span class="stage-note">Let the audience settle.</span>`,
+  2: `<div class="talk-line">"Here's the main idea."</div>`,
+  3: `<div class="talk-line">"Let me walk you through three key points."</div>`,
+};
+
+// ===== NAVIGATION ENGINE =====
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+let current = 0;
+
+function goTo(n) {
+  if (n < 0 || n >= totalSlides) return;
+  const direction = n > current ? 'left' : 'right';
+  slides.forEach(s => s.classList.remove('active', 'exit-left', 'exit-right'));
+  slides[current].classList.add(direction === 'left' ? 'exit-left' : 'exit-right');
+  current = n;
+  slides[current].classList.add('active');
+  document.getElementById('progressFill').style.width = ((current / (totalSlides - 1)) * 100) + '%';
+  document.getElementById('slideCounter').textContent = current;
+  document.getElementById('navHint').classList.add('hidden');
+  triggerAnimations(current);
+  updatePractice();
+}
+
+// ===== KEYBOARD =====
+document.addEventListener('keydown', (e) => {
+  if (overviewOverlay.classList.contains('visible')) {
+    if (e.key === 'Escape') { hideOverview(); e.preventDefault(); }
+    return;
+  }
+  if (jumpOverlay.classList.contains('visible')) {
+    e.preventDefault();
+    if (e.key === 'Escape') { hideJump(); return; }
+    if (e.key === 'Enter') { commitJump(); return; }
+    if (e.key === 'Backspace') { jumpBuffer = jumpBuffer.slice(0, -1); jumpInput.textContent = jumpBuffer || '_'; return; }
+    if (e.key >= '0' && e.key <= '9') {
+      jumpBuffer += e.key; jumpInput.textContent = jumpBuffer;
+      if (jumpTimeout) clearTimeout(jumpTimeout);
+      jumpTimeout = setTimeout(commitJump, 1200);
+    }
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); goTo(current - 1); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End') { e.preventDefault(); goTo(totalSlides - 1); }
+  if (e.key === 'g' || e.key === 'G') { e.preventDefault(); showJump(); }
+  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePractice(); }
+  if (e.key === 'o' || e.key === 'O') { e.preventDefault(); showOverview(); }
+});
+
+// ===== CLICK NAVIGATION =====
+document.addEventListener('click', (e) => {
+  if (e.target.closest('a')) return;
+  if (e.target.closest('.jump-overlay')) return;
+  if (e.target.closest('.slide-counter')) return;
+  if (e.target.closest('button')) return;
+  if (e.target.closest('.practice-panel')) return;
+  if (e.target.closest('.overview-overlay')) return;
+  const x = e.clientX;
+  if (x < window.innerWidth / 3) goTo(current - 1);
+  else goTo(current + 1);
+});
+
+// ===== JUMP TO SLIDE =====
+let jumpBuffer = '';
+let jumpTimeout = null;
+const jumpOverlay = document.getElementById('jumpOverlay');
+const jumpInput = document.getElementById('jumpInput');
+function showJump() { jumpBuffer = ''; jumpInput.textContent = '_'; jumpOverlay.classList.add('visible'); }
+function hideJump() { jumpOverlay.classList.remove('visible'); jumpBuffer = ''; if (jumpTimeout) clearTimeout(jumpTimeout); }
+function commitJump() { const num = parseInt(jumpBuffer); if (num >= 0 && num < totalSlides) goTo(num); hideJump(); }
+
+// ===== OVERVIEW GRID =====
+const overviewOverlay = document.getElementById('overviewOverlay');
+function buildOverview() {
+  const grid = document.getElementById('overviewGrid');
+  grid.innerHTML = '';
+  slides.forEach((slide, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'overview-thumb' + (i === current ? ' current' : '');
+    const preview = document.createElement('div');
+    preview.className = 'overview-thumb-preview';
+    const miniSlide = slide.cloneNode(true);
+    miniSlide.className = 'slide-mini';
+    miniSlide.style.cssText = slide.style.cssText;
+    miniSlide.querySelectorAll('.animate-in').forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+    miniSlide.querySelectorAll('button, select, a, input').forEach(el => el.remove());
+    preview.style.pointerEvents = 'none';
+    preview.appendChild(miniSlide);
+    const headline = slide.querySelector('.headline, .headline-md, .headline-sm, .big-quote, .title-main');
+    const label = slide.querySelector('.label, .step-badge');
+    let title = headline ? headline.textContent.trim().substring(0, 50) : label ? label.textContent.trim() : 'Slide ' + i;
+    const info = document.createElement('div');
+    info.className = 'overview-thumb-info';
+    info.innerHTML = '<div class="overview-thumb-num">Slide ' + i + '</div><div class="overview-thumb-title">' + title + '</div>';
+    thumb.appendChild(preview);
+    thumb.appendChild(info);
+    const idx = i;
+    thumb.addEventListener('click', (e) => { e.stopPropagation(); goTo(idx); hideOverview(); });
+    grid.appendChild(thumb);
+  });
+}
+function showOverview() { buildOverview(); overviewOverlay.classList.add('visible'); }
+function hideOverview() { overviewOverlay.classList.remove('visible'); }
+
+// ===== PRACTICE MODE =====
+const practicePanel = document.getElementById('practicePanel');
+let practiceOpen = true;
+practicePanel.classList.add('open');
+document.body.classList.add('practice-open');
+
+function togglePractice() {
+  practiceOpen = !practiceOpen;
+  practicePanel.classList.toggle('open', practiceOpen);
+  document.body.classList.toggle('practice-open', practiceOpen);
+  if (practiceOpen) updatePractice();
+}
+function updatePractice() {
+  if (!practiceOpen) return;
+  const body = document.getElementById('practiceBody');
+  const track = talkTrack[current];
+  body.innerHTML = '<div class="practice-slide-label">Slide ' + current + '</div>'
+    + (track || '<span style="color: var(--text-muted);">No talk track for this slide.</span>');
+}
+
+// ===== PER-SLIDE ANIMATIONS =====
+function triggerAnimations(slideIndex) {
+  const slide = slides[slideIndex];
+  slide.querySelectorAll('.counter').forEach((el, i) => {
+    setTimeout(() => animateCounter(el), i * 300);
+  });
+  slide.querySelectorAll('.team-member').forEach((member, i) => {
+    member.style.transitionDelay = (0.3 + i * 0.06) + 's';
+  });
+  const timeline = slide.querySelector('[data-timeline]');
+  if (timeline) {
+    const fill = timeline.querySelector('.h-timeline-fill');
+    const items = timeline.querySelectorAll('.h-timeline-item');
+    if (fill) fill.style.width = '0';
+    items.forEach(item => item.classList.remove('visible'));
+    requestAnimationFrame(() => {
+      if (fill) fill.style.width = '100%';
+      items.forEach((item, i) => { setTimeout(() => item.classList.add('visible'), 300 + i * 350); });
+    });
+  }
+}
+
+function animateCounter(el) {
+  const target = parseFloat(el.dataset.target);
+  const prefix = el.dataset.prefix || '';
+  const suffix = el.dataset.suffix || '';
+  const decimals = parseInt(el.dataset.decimals || '0');
+  const duration = 2000;
+  const start = performance.now();
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 4);
+    const value = eased * target;
+    el.textContent = prefix + (decimals > 0 ? value.toFixed(decimals) : Math.round(value).toLocaleString()) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// ===== INIT =====
+slides[0].classList.add('active');
+document.getElementById('slideCounter').textContent = 0;
+updatePractice();
+</script>
+</body>
+</html>
