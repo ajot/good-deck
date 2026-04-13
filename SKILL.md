@@ -182,7 +182,7 @@ Elements with `.animate-in` fade up when their slide becomes active:
 | P | Toggle practice mode panel |
 | O | Slide overview grid |
 
-All navigation JS is in the starter template. Interactive elements (buttons, demo containers, practice panel) are excluded from click navigation.
+All navigation JS is in the starter template. Click-to-navigate is disabled — use keyboard only.
 
 ## UI Chrome
 
@@ -203,7 +203,7 @@ All included in the starter template.
 | No `e.preventDefault()` on Space/Enter keys | Page scrolls or form submits |
 | Animations not resetting on revisit | Use `triggerAnimations()` to reset state |
 | Images not loading when deployed | Make sure Flask wrapper serves all asset directories |
-| Buttons trigger slide navigation | Exclude `.run-btn`, `.demo-container`, `button` from click handler |
+| Accidental slide navigation on click | Click-to-navigate is disabled by default — keyboard only |
 | Practice panel overlays content | Use `body.practice-open .deck { width: calc(100vw - 420px); }` |
 | `demo-code` indentation is wrong | Content uses `white-space: pre` — formatting inside the tag matters |
 

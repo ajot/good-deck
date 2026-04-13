@@ -204,8 +204,7 @@ body.practice-open .slide-counter { right: 452px; }
     <span style="color: var(--text-secondary);">Space</span> &nbsp;Next &nbsp;&nbsp;&middot;&nbsp;&nbsp;
     <span style="color: var(--text-secondary);">G</span> &nbsp;Jump to slide &nbsp;&nbsp;&middot;&nbsp;&nbsp;
     <span style="color: var(--text-secondary);">P</span> &nbsp;Practice mode &nbsp;&nbsp;&middot;&nbsp;&nbsp;
-    <span style="color: var(--text-secondary);">O</span> &nbsp;Overview &nbsp;&nbsp;&middot;&nbsp;&nbsp;
-    <span style="color: var(--text-secondary);">Click</span> &nbsp;Left = back, rest = forward
+    <span style="color: var(--text-secondary);">O</span> &nbsp;Overview
   </div>
 </section>
 
@@ -354,18 +353,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'o' || e.key === 'O') { e.preventDefault(); showOverview(); }
 });
 
-// ===== CLICK NAVIGATION =====
-document.addEventListener('click', (e) => {
-  if (e.target.closest('a')) return;
-  if (e.target.closest('.jump-overlay')) return;
-  if (e.target.closest('.slide-counter')) return;
-  if (e.target.closest('button')) return;
-  if (e.target.closest('.practice-panel')) return;
-  if (e.target.closest('.overview-overlay')) return;
-  const x = e.clientX;
-  if (x < window.innerWidth / 3) goTo(current - 1);
-  else goTo(current + 1);
-});
+// Click navigation disabled — use arrow keys, Space, G, or slide counter instead
 
 // ===== JUMP TO SLIDE =====
 let jumpBuffer = '';
