@@ -184,6 +184,10 @@ Elements with `.animate-in` fade up when their slide becomes active:
 
 All navigation JS is in the starter template. Click-to-navigate is disabled — use keyboard only.
 
+### Slide Persistence
+
+The deck saves the current slide index to `localStorage` on every navigation. On page load, it restores the last viewed slide instead of starting from slide 0. This works on any host (local or deployed). The starter template includes this by default.
+
 ## UI Chrome
 
 Always include after the `.deck` div:

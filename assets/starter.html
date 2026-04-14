@@ -311,6 +311,7 @@ const talkTrack = {
 const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
 let current = 0;
+const savedSlide = parseInt(localStorage.getItem('currentSlide'), 10);
 
 function goTo(n) {
   if (n < 0 || n >= totalSlides) return;
@@ -324,6 +325,7 @@ function goTo(n) {
   document.getElementById('navHint').classList.add('hidden');
   triggerAnimations(current);
   updatePractice();
+  try { localStorage.setItem('currentSlide', current); } catch(e) {}
 }
 
 // ===== KEYBOARD =====
@@ -457,10 +459,14 @@ function animateCounter(el) {
   requestAnimationFrame(update);
 }
 
-// ===== INIT =====
-slides[0].classList.add('active');
-document.getElementById('slideCounter').textContent = 0;
-updatePractice();
+// ===== INIT — restore last viewed slide on refresh =====
+if (savedSlide > 0 && savedSlide < totalSlides) {
+  goTo(savedSlide);
+} else {
+  slides[0].classList.add('active');
+  document.getElementById('slideCounter').textContent = 0;
+  updatePractice();
+}
 </script>
 </body>
 </html>
