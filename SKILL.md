@@ -45,6 +45,7 @@ The core patterns are below. For specialized features, load these references on 
 
 - **Live API demos** (run buttons, model dropdowns, copy-to-clipboard, JSON toggle, spinners) → Read `references/live-demos.md`
 - **Practice mode** (talk track panel, stage notes, formatting guide) → Read `references/practice-mode.md`
+- **Presenter view** (popup speaker notes for live presentations, timer, sync) → Read `references/presenter-view.md`
 - **Slide components** (stat cards, badges, quote cards, team grids, timelines, code highlighters) → Read `references/slide-components.md`
 - **Advanced components** (comparison panels, cost bars, journey tracks, step badges, background overlays, WIP banner) → Read `references/advanced-components.md`
 - **Deployment** (Flask wrapper, Dockerfile, env vars, password auth) → Read `references/deployment.md`
@@ -180,6 +181,7 @@ Elements with `.animate-in` fade up when their slide becomes active:
 | End | Last slide |
 | G | Jump to slide overlay |
 | P | Toggle practice mode panel |
+| Shift+P | Open presenter view popup |
 | O | Slide overview grid |
 
 All navigation JS is in the starter template. Click-to-navigate is disabled — use keyboard only.
@@ -209,6 +211,8 @@ All included in the starter template.
 | Images not loading when deployed | Make sure Flask wrapper serves all asset directories |
 | Accidental slide navigation on click | Click-to-navigate is disabled by default — keyboard only |
 | Practice panel overlays content | Use `body.practice-open .deck { width: calc(100vw - 420px); }` |
+| Presenter popup shows NaN or no talk track | `const`/`let` vars aren't on `window` — add `window.totalSlides = totalSlides` and `window.talkTrack = talkTrack` |
+| Writing `</script>` inside a script block (even in comments or strings) | HTML parser closes the script tag early — use DOM `createElement('script')` instead |
 | `demo-code` indentation is wrong | Content uses `white-space: pre` — formatting inside the tag matters |
 
 ## Sizing for Screen Sharing

@@ -204,7 +204,10 @@ body.practice-open .slide-counter { right: 452px; }
     <span style="color: var(--text-secondary);">Space</span> &nbsp;Next &nbsp;&nbsp;&middot;&nbsp;&nbsp;
     <span style="color: var(--text-secondary);">G</span> &nbsp;Jump to slide &nbsp;&nbsp;&middot;&nbsp;&nbsp;
     <span style="color: var(--text-secondary);">P</span> &nbsp;Practice mode &nbsp;&nbsp;&middot;&nbsp;&nbsp;
+    <span style="color: var(--text-secondary);">Shift+P</span> &nbsp;Presenter view &nbsp;&nbsp;&middot;&nbsp;&nbsp;
     <span style="color: var(--text-secondary);">O</span> &nbsp;Overview
+    <br>
+    <button onclick="openPresenter()" style="margin-top: 20px; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: var(--accent); font-family: var(--font-mono); font-size: 13px; padding: 10px 24px; border-radius: 6px; cursor: pointer; letter-spacing: 1px;">OPEN PRESENTER VIEW</button>
   </div>
 </section>
 
@@ -306,12 +309,20 @@ const talkTrack = {
   2: `<div class="talk-line">"Here's the main idea."</div>`,
   3: `<div class="talk-line">"Let me walk you through three key points."</div>`,
 };
+window.talkTrack = talkTrack;
 
 // ===== NAVIGATION ENGINE =====
 const slides = document.querySelectorAll('.slide');
 const totalSlides = slides.length;
 let current = 0;
 const savedSlide = parseInt(localStorage.getItem('currentSlide'), 10);
+
+// Expose for presenter popup (const/let are NOT window properties)
+window.totalSlides = totalSlides;
+
+// Presenter view state
+let presenterWindow = null;
+let presenterActive = false;
 
 function goTo(n) {
   if (n < 0 || n >= totalSlides) return;
@@ -326,6 +337,82 @@ function goTo(n) {
   triggerAnimations(current);
   updatePractice();
   try { localStorage.setItem('currentSlide', current); } catch(e) {}
+
+  // Sync presenter view
+  if (presenterWindow && !presenterWindow.closed) {
+    try { presenterWindow.updateSlide(current); } catch(e) {}
+  } else if (presenterActive) {
+    presenterActive = false;
+  }
+}
+
+// ===== PRESENTER VIEW =====
+function openPresenter() {
+  if (presenterWindow && !presenterWindow.closed) { presenterWindow.focus(); return; }
+  const w = 520, h = window.screen.height, left = window.screen.width - w;
+  presenterWindow = window.open('', 'presenterView',
+    `width=${w},height=${h},left=${left},top=0,menubar=no,toolbar=no,location=no,status=no`);
+  const doc = presenterWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html>
+<html><head><title>Presenter View</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f0f; color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .presenter-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+  .presenter-label { font-family: monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.4); }
+  .presenter-timer { font-family: monospace; font-size: 18px; color: #3b82f6; letter-spacing: 1px; }
+  .presenter-slide-info { padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; }
+  .presenter-slide-number { font-size: 36px; font-weight: 800; color: #fff; }
+  .presenter-slide-total { font-family: monospace; font-size: 14px; color: rgba(255,255,255,0.35); margin-left: 4px; }
+  .presenter-progress { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+  .presenter-progress-fill { height: 100%; background: #3b82f6; border-radius: 2px; transition: width 0.3s ease; width: 0%; }
+  .presenter-body { padding: 24px; overflow-y: auto; flex: 1; font-size: 15px; line-height: 1.7; color: rgba(255,255,255,0.7); }
+  .presenter-body .talk-line { margin-bottom: 12px; padding-left: 20px; position: relative; }
+  .presenter-body .talk-line::before { content: '\\203A'; color: #60a5fa; font-weight: 700; font-size: 18px; position: absolute; left: 0; top: 0; line-height: 1.5; }
+  .presenter-body strong { color: #fff; font-weight: 600; }
+  .presenter-body em { background: rgba(59,130,246,0.2); color: #60a5fa; font-style: normal; padding: 1px 4px; border-radius: 3px; }
+  .presenter-body .stage-note { display: block; margin: 12px 0; padding: 8px 12px; border-left: 3px solid #f5a623; background: rgba(245,166,35,0.08); border-radius: 0 6px 6px 0; font-family: monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: #f5a623; }
+  .presenter-footer { padding: 12px 24px; border-top: 1px solid rgba(255,255,255,0.08); font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; flex-shrink: 0; }
+</style>
+</head><body>
+  <div class="presenter-header"><span class="presenter-label">Presenter View</span><span class="presenter-timer" id="timer">00:00</span></div>
+  <div class="presenter-slide-info"><span class="presenter-slide-number" id="slideNum">0</span><span class="presenter-slide-total" id="slideTotal">/ 0</span><div class="presenter-progress"><div class="presenter-progress-fill" id="progressFill"></div></div></div>
+  <div class="presenter-body" id="talkBody"><span style="color: rgba(255,255,255,0.3);">Waiting for slide navigation...</span></div>
+  <div class="presenter-footer">Navigate from main window · Shift+P to close</div>
+</body></html>`);
+  doc.close();
+  // Inject script via DOM — never write script tags inside a script block
+  const ps = presenterWindow.document.createElement('script');
+  ps.textContent = `
+    var opener = window.opener;
+    var timerInterval = null;
+    function updateSlide(n) {
+      var total = opener ? opener.totalSlides : 0;
+      document.getElementById('slideNum').textContent = n;
+      document.getElementById('slideTotal').textContent = '/ ' + (total - 1);
+      document.getElementById('progressFill').style.width = total > 1 ? ((n / (total - 1)) * 100) + '%' : '0%';
+      var track = opener.talkTrack[n];
+      document.getElementById('talkBody').innerHTML = track || '<span style="color: rgba(255,255,255,0.3);">No talk track for this slide.</span>';
+      if (n > 0 && !timerInterval) {
+        var start = Date.now();
+        timerInterval = setInterval(function() {
+          var elapsed = Math.floor((Date.now() - start) / 1000);
+          var m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+          var s = String(elapsed % 60).padStart(2, '0');
+          document.getElementById('timer').textContent = m + ':' + s;
+        }, 1000);
+      }
+    }
+  `;
+  presenterWindow.document.body.appendChild(ps);
+  try { presenterWindow.updateSlide(current); } catch(e) {}
+  presenterActive = true;
+  if (practiceOpen) {
+    practiceOpen = false;
+    practicePanel.classList.remove('open');
+    document.body.classList.remove('practice-open');
+  }
 }
 
 // ===== KEYBOARD =====
@@ -351,7 +438,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Home') { e.preventDefault(); goTo(0); }
   if (e.key === 'End') { e.preventDefault(); goTo(totalSlides - 1); }
   if (e.key === 'g' || e.key === 'G') { e.preventDefault(); showJump(); }
-  if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePractice(); }
+  if (e.key === 'P' && e.shiftKey) { e.preventDefault(); openPresenter(); return; }
+  if ((e.key === 'p' || e.key === 'P') && !e.shiftKey) { e.preventDefault(); if (!presenterActive) togglePractice(); }
   if (e.key === 'o' || e.key === 'O') { e.preventDefault(); showOverview(); }
 });
 
