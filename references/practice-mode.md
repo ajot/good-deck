@@ -13,6 +13,10 @@ Include after the UI chrome elements:
     <button class="practice-close" onclick="togglePractice()">&times;</button>
   </div>
   <div class="practice-body" id="practiceBody"></div>
+  <div class="practice-next-preview">
+    <div class="practice-next-label">Up Next</div>
+    <div class="practice-next-container" id="practiceNextPreview"></div>
+  </div>
   <div class="practice-hint">Press P to toggle</div>
 </div>
 ```
@@ -111,6 +115,42 @@ Include after the UI chrome elements:
   font-family: var(--font-mono); font-size: 11px;
   color: var(--text-muted); flex-shrink: 0; text-align: center;
 }
+
+/* Next slide preview */
+.practice-next-preview {
+  padding: 16px 24px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.practice-next-label {
+  font-family: var(--font-mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--text-muted); margin-bottom: 10px;
+}
+.practice-next-container {
+  width: 100%; aspect-ratio: 16/9;
+  overflow: hidden; position: relative;
+  background:
+    radial-gradient(ellipse 70% 55% at 80% 10%, rgba(0,105,255,0.08) 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-deep, #1a1a2e) 0%, #16213e 100%);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.practice-next-container .slide-mini {
+  width: 1280px; height: 720px;
+  transform: scale(0.27);
+  transform-origin: top left;
+  pointer-events: none;
+  position: absolute; top: 0; left: 0;
+  display: flex; flex-direction: column;
+  padding: 48px 60px;
+}
+.practice-next-end {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
+  font-family: var(--font-mono); font-size: 12px;
+  color: var(--text-muted); letter-spacing: 1px;
+}
 ```
 
 ## Practice Panel JavaScript
@@ -145,8 +185,20 @@ function updatePractice() {
   const track = talkTrack[current];
   body.innerHTML = '<div class="practice-slide-label">Slide ' + current + '</div>'
     + (track || '<span style="color: var(--text-muted);">No talk track for this slide.</span>');
+
+  // Next slide preview
+  const container = document.getElementById('practiceNextPreview');
+  container.innerHTML = '';
+  const nextClone = cloneSlidePreview(current + 1);
+  if (nextClone) {
+    container.appendChild(nextClone);
+  } else {
+    container.innerHTML = '<div class="practice-next-end">End of deck</div>';
+  }
 }
 ```
+
+The `cloneSlidePreview()` function is defined in the presenter view reference — see `presenter-view.md` → "Next Slide Preview" → "Shared Clone Function". It must be defined before `updatePractice()` is called.
 
 Add `updatePractice()` call inside the `goTo()` function, and add `P` key binding in the keyboard handler.
 

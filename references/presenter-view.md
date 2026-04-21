@@ -279,6 +279,130 @@ window.talkTrack = talkTrack;
 
 Scripts written inside `doc.write()` run before the document is fully built. Instead, create a `<script>` element via DOM and append it after `doc.close()`. This ensures the popup's DOM is ready and avoids the nested `</script>` problem entirely.
 
+## Next Slide Preview
+
+Both the presenter popup and practice panel show a visual "Up Next" thumbnail of the next slide below the talk track. This reuses the overview grid's clone-and-scale technique.
+
+### Shared Clone Function
+
+Add after `window.talkTrack = talkTrack;` and before the practice panel code:
+
+```javascript
+// ===== NEXT SLIDE PREVIEW =====
+function cloneSlidePreview(slideIndex) {
+  if (slideIndex < 0 || slideIndex >= totalSlides) return null;
+  const slide = slides[slideIndex];
+  const clone = slide.cloneNode(true);
+  clone.className = 'slide-mini';
+  clone.style.cssText = slide.style.cssText;
+  clone.querySelectorAll('.animate-in').forEach(el => {
+    el.style.opacity = '1';
+    el.style.transform = 'none';
+  });
+  clone.querySelectorAll('button, select, a, input').forEach(el => el.remove());
+  clone.style.pointerEvents = 'none';
+  return clone;
+}
+window.cloneSlidePreview = cloneSlidePreview;
+```
+
+Expose on `window` so the presenter popup can call it via `opener.cloneSlidePreview()`.
+
+### Presenter Popup Preview CSS
+
+Add these styles inside the presenter popup's `<style>` block. Also add `min-height: 0;` to `.presenter-body` so the talk track properly shares space with the preview:
+
+```css
+  .presenter-body {
+    padding: 24px; overflow-y: auto; flex: 1;
+    min-height: 0;
+    font-size: 15px; line-height: 1.7;
+    color: rgba(255,255,255,0.7);
+  }
+  .presenter-next-preview {
+    padding: 12px 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+  }
+  .presenter-next-label {
+    font-family: monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.35); margin-bottom: 8px;
+  }
+  .presenter-next-container {
+    width: 100%; aspect-ratio: 16/9;
+    overflow: hidden; position: relative;
+    background:
+      radial-gradient(ellipse 70% 55% at 80% 10%, rgba(0,105,255,0.08) 0%, transparent 60%),
+      linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .presenter-next-container .slide-mini {
+    width: 1280px; height: 720px;
+    transform: scale(0.367);
+    transform-origin: top left;
+    pointer-events: none;
+    position: absolute; top: 0; left: 0;
+    display: flex; flex-direction: column;
+    padding: 48px 60px;
+  }
+  .presenter-next-end {
+    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+    font-family: monospace; font-size: 12px;
+    color: rgba(255,255,255,0.35); letter-spacing: 1px;
+  }
+```
+
+### Presenter Popup Preview HTML
+
+Add between the `presenter-body` div and `presenter-footer` div:
+
+```html
+  <div class="presenter-next-preview">
+    <div class="presenter-next-label">Up Next</div>
+    <div class="presenter-next-container" id="nextSlidePreview"></div>
+  </div>
+```
+
+### Copy Main Stylesheet Into Popup
+
+After `doc.close()`, copy the main window's stylesheet so cloned slides render correctly (backgrounds, card grids, fonts, etc.):
+
+```javascript
+  doc.close();
+
+  // Copy main stylesheet so cloned slides render correctly
+  const mainStyle = document.querySelector('style');
+  if (mainStyle) {
+    const deckStyle = presenterWindow.document.createElement('style');
+    deckStyle.textContent = mainStyle.textContent;
+    presenterWindow.document.head.appendChild(deckStyle);
+  }
+```
+
+### Update Presenter `updateSlide()` Script
+
+Add the next slide preview logic inside the `updateSlide(n)` function, after setting the talk track body and before the timer logic:
+
+```javascript
+      // Next slide preview
+      var container = document.getElementById('nextSlidePreview');
+      container.innerHTML = '';
+      var nextClone = opener.cloneSlidePreview(n + 1);
+      if (nextClone) {
+        var imported = document.adoptNode(nextClone);
+        container.appendChild(imported);
+      } else {
+        container.innerHTML = '<div class="presenter-next-end">End of deck</div>';
+      }
+```
+
+### Critical: `document.adoptNode()` for Cross-Window DOM
+
+The cloned node belongs to the main window's document. To move it into the presenter popup's document, use `document.adoptNode(node)` — this transfers ownership so `appendChild` works without errors.
+
 ## Timer
 
 - Starts on first slide advance past slide 0 (not on page load)
