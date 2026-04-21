@@ -14,6 +14,19 @@ Good Deck turns your content (outlines, notes, stats) into a self-contained `ind
 - Optional live API demo containers with copy-to-clipboard and JSON toggle
 - Optional Flask wrapper for password-protected hosting
 
+## What's New
+
+**v2.1** — Next slide preview in presenter view and practice panel
+> Both views now show an "Up Next" thumbnail of your next slide. Ask: *"add next slide preview to my deck"*
+
+**v2.0** — Skill restructure, starter template, presenter view
+> Progressive disclosure architecture — SKILL.md is ~200 lines, references loaded on demand. Starter template. Presenter popup with timer. Slide persistence.
+
+**v1.0** — Initial release
+> Single-file HTML deck with keyboard nav, practice mode, slide overview, animated transitions.
+
+[Full changelog →](references/whats-new.md)
+
 ## Install
 
 Requires [Node.js](https://nodejs.org/).
@@ -50,11 +63,13 @@ good-deck/
   assets/
     starter.html                    # Ready-to-go deck template
   references/
-    practice-mode.md                # Talk track panel details
+    practice-mode.md                # Talk track panel, next slide preview
+    presenter-view.md               # Popup speaker notes, next slide preview
     slide-components.md             # Stat cards, badges, quotes, timelines
     live-demos.md                   # Interactive API demo containers
     advanced-components.md          # Comparison panels, cost bars, journey tracks
     deployment.md                   # Flask wrapper, Docker, auth
+    whats-new.md                    # Changelog and migration guide
 ```
 
 The agent loads `SKILL.md` on every run and pulls in references on demand — only what the task needs.

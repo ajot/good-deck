@@ -24,4 +24,33 @@ See `references/presenter-view.md` → "Next Slide Preview" section for complete
 
 ## v2.0 — April 14, 2026
 
-Initial release. Single-file HTML/CSS/JS slide deck with keyboard navigation, progress bar, animated transitions, practice mode with talk track, presenter view, slide overview grid, and jump-to-slide overlay.
+### Skill Restructure
+
+SKILL.md trimmed from 1,219 lines to ~200 — core workflow only. Detailed patterns moved to references/ (loaded on demand):
+- `practice-mode.md` — talk track panel, stage notes
+- `slide-components.md` — stat cards, badges, quotes, timelines
+- `live-demos.md` — API demo containers, copy buttons, JSON toggle
+- `advanced-components.md` — comparison panels, cost bars, journey tracks
+- `deployment.md` — Flask wrapper, Dockerfile, env vars
+
+### Starter Template
+
+Added `assets/starter.html` — a complete working deck template the agent copies and modifies instead of regenerating from scratch.
+
+### Presenter View
+
+New feature — Shift+P opens a popup with talk track, slide number, and timer for live presenting on a second screen. See `references/presenter-view.md`.
+
+### Slide Persistence
+
+Deck saves current slide to localStorage on every navigation and restores on page load.
+
+### Keyboard-Only Navigation
+
+Removed click-to-navigate — keyboard only (arrows, space, G, O, P).
+
+---
+
+## v1.0 — April 9, 2026
+
+Initial release. Single-file HTML/CSS/JS slide deck with keyboard navigation, progress bar, animated transitions, practice mode with talk track, slide overview grid, and jump-to-slide overlay.
