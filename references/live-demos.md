@@ -254,7 +254,8 @@ function showResponse(containerId, data) {
     return;
   }
   el.dataset.showJson = 'false';
-  el.innerHTML = '<div class="response-text">' + escapeHtml(data.content || 'No content') + '</div>';
+  // Render response as markdown (bold/italic/lists/headers/code)
+  el.innerHTML = '<div class="response-text">' + renderMarkdown(data.content || 'No content') + '</div>';
 
   let meta = '<span>Model: <span class="meta-accent">' + (data.model || '?') + '</span></span>';
   if (data.usage && data.usage.total_tokens) {
@@ -265,6 +266,38 @@ function showResponse(containerId, data) {
   metaEl.innerHTML = meta;
 }
 ```
+
+### Markdown Rendering for Responses
+
+Modern chat models often return markdown — bullet lists, bold, headers, inline code. Rendering it as plain text looks lazy. This minimal renderer handles the common cases without pulling in a markdown library:
+
+```javascript
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  // Bold: **text**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic: *text*
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Inline code: `text`
+  html = html.replace(/`(.+?)`/g, '<code style="background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 3px; font-size: 0.9em;">$1</code>');
+  // Headers: ### text or ## text or # text
+  html = html.replace(/^###\s+(.+)$/gm, '<div style="font-weight: 700; color: var(--text-primary); margin: 12px 0 4px;">$1</div>');
+  html = html.replace(/^##\s+(.+)$/gm, '<div style="font-weight: 700; font-size: 1.1em; color: var(--text-primary); margin: 16px 0 6px;">$1</div>');
+  html = html.replace(/^#\s+(.+)$/gm, '<div style="font-weight: 700; font-size: 1.2em; color: var(--text-primary); margin: 16px 0 8px;">$1</div>');
+  // Bullet points: - text or * text
+  html = html.replace(/^[\-\*]\s+(.+)$/gm, '<div style="padding-left: 16px; position: relative; margin: 2px 0;"><span style="position: absolute; left: 0; color: var(--accent-light);">&bull;</span>$1</div>');
+  // Numbered lists: 1. text
+  html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<div style="padding-left: 20px; position: relative; margin: 2px 0;"><span style="position: absolute; left: 0; color: var(--accent-light);">$1.</span>$2</div>');
+  // Line breaks
+  html = html.replace(/\n\n/g, '<div style="margin-top: 10px;"></div>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+```
+
+**Important:** `escapeHtml(text)` runs **first** so any HTML in the model's response is neutralized — the markdown patterns then operate on safe text and re-introduce only the tags they explicitly add. Don't reorder.
+
+This keeps the JSON toggle clean: the raw fixture/response stays unmodified in `demoRawData`, and the markdown is applied only when rendering the human-readable view. Toggle to JSON and back works correctly.
 
 ### JSON Toggle
 
@@ -277,7 +310,7 @@ function toggleJson(containerId) {
 
   if (el.dataset.showJson === 'true') {
     el.dataset.showJson = 'false';
-    el.innerHTML = '<div class="response-text">' + escapeHtml(data.content || 'No content') + '</div>';
+    el.innerHTML = '<div class="response-text">' + renderMarkdown(data.content || 'No content') + '</div>';
     if (btn) { btn.classList.remove('active'); btn.textContent = 'JSON'; }
   } else {
     el.dataset.showJson = 'true';

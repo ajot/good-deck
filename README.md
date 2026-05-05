@@ -14,19 +14,6 @@ Good Deck turns your content (outlines, notes, stats) into a self-contained `ind
 - Optional live API demo containers with copy-to-clipboard and JSON toggle
 - Optional Flask wrapper for password-protected hosting
 
-## What's New
-
-**v2.1** — Next slide preview in presenter view and practice panel
-> Both views now show an "Up Next" thumbnail of your next slide. Ask: *"add next slide preview to my deck"*
-
-**v2.0** — Skill restructure, starter template, presenter view
-> Progressive disclosure architecture — SKILL.md is ~200 lines, references loaded on demand. Starter template. Presenter popup with timer. Slide persistence.
-
-**v1.0** — Initial release
-> Single-file HTML deck with keyboard nav, practice mode, slide overview, animated transitions.
-
-[Full changelog →](references/whats-new.md)
-
 ## Install
 
 Requires [Node.js](https://nodejs.org/).
@@ -55,6 +42,19 @@ Paste this prompt after installing to see it in action:
 > 6. Common pitfalls and how to avoid them
 > 7. Closing slide: "Just start. Ship it. Iterate."
 
+## What's New
+
+**v2.2** — API fallback / canned mode, presenter auto-recovery, speaker badges, markdown responses
+> Pre-captured fixtures replay automatically when live demos fail; `Shift+C` forces canned mode. Presenter popup auto-recovers from cross-tab sync loss; `Shift+R` is the manual escape hatch. Optional speaker badges + transition indicators for multi-presenter decks. Demo responses now render markdown. Ask: *"apply latest changes"*
+
+**v2.1** — Next slide preview in presenter view and practice panel
+> Both views now show an "Up Next" thumbnail of your next slide. Ask: *"add next slide preview to my deck"*
+
+**v2.0** — Skill restructure, starter template, presenter view
+> Progressive disclosure architecture — SKILL.md is ~200 lines, references loaded on demand. Starter template. Presenter popup with timer. Slide persistence.
+
+[Full changelog →](references/whats-new.md)
+
 ## Structure
 
 ```
@@ -67,6 +67,7 @@ good-deck/
     presenter-view.md               # Popup speaker notes, next slide preview
     slide-components.md             # Stat cards, badges, quotes, timelines
     live-demos.md                   # Interactive API demo containers
+    api-fallback.md                 # Canned mode + fixture replay for live demos
     advanced-components.md          # Comparison panels, cost bars, journey tracks
     deployment.md                   # Flask wrapper, Docker, auth
     whats-new.md                    # Changelog and migration guide

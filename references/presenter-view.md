@@ -33,9 +33,42 @@ window.talkTrack = talkTrack;
 
 ### The `openPresenter()` Function
 
-Add before the keyboard handler:
+Add before the keyboard handler. The script that runs inside the popup is **extracted into `injectPresenterScript()`** so we can re-call it for auto-recovery (see "Auto-Recovery and Force-Resync" below).
 
 ```javascript
+function injectPresenterScript() {
+  if (!presenterWindow || presenterWindow.closed) return;
+  const s = presenterWindow.document.createElement('script');
+  s.textContent = `
+    var opener = window.opener;
+    var timerInterval = window._timerInterval || null;
+
+    function updateSlide(n) {
+      var total = opener ? opener.totalSlides : 0;
+      document.getElementById('slideNum').textContent = n;
+      document.getElementById('slideTotal').textContent = '/ ' + (total - 1);
+      document.getElementById('progressFill').style.width =
+        total > 1 ? ((n / (total - 1)) * 100) + '%' : '0%';
+
+      var track = opener.talkTrack[n];
+      document.getElementById('talkBody').innerHTML = track ||
+        '<span style="color: rgba(255,255,255,0.3);">No talk track for this slide.</span>';
+
+      if (n > 0 && !timerInterval) {
+        var start = Date.now();
+        timerInterval = setInterval(function() {
+          var elapsed = Math.floor((Date.now() - start) / 1000);
+          var m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+          var s = String(elapsed % 60).padStart(2, '0');
+          document.getElementById('timer').textContent = m + ':' + s;
+        }, 1000);
+        window._timerInterval = timerInterval;
+      }
+    }
+  `;
+  presenterWindow.document.body.appendChild(s);
+}
+
 function openPresenter() {
   if (presenterWindow && !presenterWindow.closed) {
     presenterWindow.focus();
@@ -118,12 +151,13 @@ function openPresenter() {
     font-style: normal; padding: 1px 4px; border-radius: 3px;
   }
   .presenter-body .stage-note {
-    display: block; margin: 12px 0; padding: 8px 12px;
-    border-left: 3px solid #f5a623;
-    background: rgba(245,166,35,0.08);
-    border-radius: 0 6px 6px 0;
-    font-family: monospace; font-size: 12px;
-    text-transform: uppercase; letter-spacing: 1.5px; color: #f5a623;
+    display: block; margin: 8px 0; padding: 4px 10px;
+    border-left: 2px solid rgba(245,166,35,0.4);
+    background: rgba(245,166,35,0.04);
+    border-radius: 0 4px 4px 0;
+    font-family: monospace; font-size: 10px;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: rgba(255,200,87,0.5);
   }
   .presenter-footer {
     padding: 12px 24px;
@@ -150,35 +184,7 @@ function openPresenter() {
 </body></html>`);
   doc.close();
 
-  // Inject script via DOM to avoid nested script tag issues
-  const presenterScript = presenterWindow.document.createElement('script');
-  presenterScript.textContent = `
-    var opener = window.opener;
-    var timerInterval = null;
-
-    function updateSlide(n) {
-      var total = opener ? opener.totalSlides : 0;
-      document.getElementById('slideNum').textContent = n;
-      document.getElementById('slideTotal').textContent = '/ ' + (total - 1);
-      document.getElementById('progressFill').style.width =
-        total > 1 ? ((n / (total - 1)) * 100) + '%' : '0%';
-
-      var track = opener.talkTrack[n];
-      document.getElementById('talkBody').innerHTML = track ||
-        '<span style="color: rgba(255,255,255,0.3);">No talk track for this slide.</span>';
-
-      if (n > 0 && !timerInterval) {
-        var start = Date.now();
-        timerInterval = setInterval(function() {
-          var elapsed = Math.floor((Date.now() - start) / 1000);
-          var m = String(Math.floor(elapsed / 60)).padStart(2, '0');
-          var s = String(elapsed % 60).padStart(2, '0');
-          document.getElementById('timer').textContent = m + ':' + s;
-        }, 1000);
-      }
-    }
-  `;
-  presenterWindow.document.body.appendChild(presenterScript);
+  injectPresenterScript();
 
   // Initial sync
   try { presenterWindow.updateSlide(current); } catch(e) {}
@@ -195,12 +201,17 @@ function openPresenter() {
 
 ### Sync in `goTo()`
 
-Add after the `localStorage.setItem` line in `goTo()`:
+Add after the `localStorage.setItem` line in `goTo()`. The try/catch block **auto-recovers** when the popup loses its script context (which happens after some browser tab-switching or sleep cycles) by calling `injectPresenterScript()` and retrying:
 
 ```javascript
-// Sync presenter view
+// Sync presenter view (with auto-recovery if script context was lost)
 if (presenterWindow && !presenterWindow.closed) {
-  try { presenterWindow.updateSlide(current); } catch(e) {}
+  try {
+    presenterWindow.updateSlide(current);
+  } catch(e) {
+    console.warn('Presenter sync failed, reinjecting script...');
+    try { injectPresenterScript(); presenterWindow.updateSlide(current); } catch(e2) {}
+  }
 } else if (presenterActive) {
   presenterActive = false;
 }
@@ -218,6 +229,29 @@ if (e.key === 'p' || e.key === 'P') { e.preventDefault(); togglePractice(); }
 if (e.key === 'P' && e.shiftKey) { e.preventDefault(); openPresenter(); return; }
 if ((e.key === 'p' || e.key === 'P') && !e.shiftKey) { e.preventDefault(); if (!presenterActive) togglePractice(); }
 ```
+
+### Force-Resync (Shift+R)
+
+`Shift+R` manually re-injects the presenter script and re-syncs. Useful when you can see the popup is stuck (e.g. timer frozen, slide number not updating) and want to recover without closing/reopening it. The header flashes green for 500ms to confirm the resync landed:
+
+```javascript
+if (e.key === 'R' && e.shiftKey) {
+  e.preventDefault();
+  if (presenterWindow && !presenterWindow.closed) {
+    injectPresenterScript();
+    try { presenterWindow.updateSlide(current); } catch(e) {}
+    // Flash the presenter header to confirm resync
+    try {
+      const h = presenterWindow.document.querySelector('.presenter-header');
+      h.style.background = 'rgba(34,197,94,0.2)';
+      setTimeout(() => { h.style.background = ''; }, 500);
+    } catch(e) {}
+  }
+  return;
+}
+```
+
+The `goTo()` auto-recovery handles most cases silently — `Shift+R` is the manual escape hatch for the rare case where the auto-recovery itself fails (e.g. if the popup is stale enough that even the reinjected script's DOM queries fail on first call).
 
 ### Slide 0 Button
 
@@ -238,6 +272,85 @@ Add inside the navigation hints div on slide 0. This avoids popup blocker issues
   letter-spacing: 1px;
 ">OPEN PRESENTER VIEW</button>
 ```
+
+## Speaker Badges in Header (Optional)
+
+For multi-presenter decks, the header can show **who's speaking on the current slide** and a **transition indicator** when the next slide hands off to a different speaker. This pattern uses a `speakerMap` keyed by slide number. Skip this section if your deck has a single presenter.
+
+### Define `speakerMap`
+
+After `window.talkTrack = talkTrack;`, add:
+
+```javascript
+const speakerMap = (() => {
+  const map = {};
+  // Lists of slide numbers per speaker. Adjust to your deck.
+  const aprilSlides = [...Array.from({length: 12}, (_, i) => i + 1), 19, 20, 21, 22, 23];
+  const amitSlides  = [...Array.from({length: 6},  (_, i) => i + 13), 24, 25, 26, 27, 28];
+  aprilSlides.forEach(n => map[n] = 'april');
+  amitSlides.forEach(n  => map[n] = 'amit');
+  return map;
+})();
+window.speakerMap = speakerMap;
+```
+
+The keys are slide indices and values are short identifier strings (`'april'`, `'amit'`). Add more speakers by extending the pattern.
+
+### Header HTML
+
+Add a speaker badge `<span>` and transition indicator `<div>` to the popup body. The badge sits at the left of the header; the transition indicator sits between the talk track body and the next-slide preview:
+
+```html
+<!-- inside .presenter-header, BEFORE the slide number -->
+<span id="presenterSpeaker"
+      style="width: 22px; height: 22px; border-radius: 50%;
+             display: flex; align-items: center; justify-content: center;
+             font-family: monospace; font-size: 9px; font-weight: 700;
+             flex-shrink: 0; color: #fff;"></span>
+
+<!-- between .presenter-body and .presenter-next-preview -->
+<div id="speakerTransition"
+     style="display: none; font-family: monospace; font-size: 11px;
+            padding: 6px 16px; font-weight: 600; text-align: center; flex-shrink: 0;"></div>
+```
+
+### Update `injectPresenterScript()`
+
+Inside `updateSlide(n)` — after the talk track body is set, add the badge + transition logic:
+
+```javascript
+      // Current speaker badge
+      var speakerEl = document.getElementById('presenterSpeaker');
+      var sMap = opener.speakerMap || {};
+      var currentSpeaker = sMap[n] || '';
+      if (currentSpeaker === 'april') {
+        speakerEl.textContent = 'AD';
+        speakerEl.style.background = 'rgba(77,154,255,0.4)';
+      } else if (currentSpeaker === 'amit') {
+        speakerEl.textContent = 'AJ';
+        speakerEl.style.background = 'rgba(34,197,94,0.4)';
+      } else {
+        speakerEl.textContent = '';
+        speakerEl.style.background = 'transparent';
+      }
+
+      // Speaker transition indicator (shows on slides right before a handoff)
+      var transEl = document.getElementById('speakerTransition');
+      var nextSpeaker = sMap[n + 1] || '';
+      if (nextSpeaker && nextSpeaker !== currentSpeaker) {
+        var name = nextSpeaker === 'april' ? '\u2192 APRIL' : '\u2192 AMIT';
+        var color = nextSpeaker === 'april' ? '#4d9aff' : '#22c55e';
+        var bg = nextSpeaker === 'april' ? 'rgba(77,154,255,0.15)' : 'rgba(34,197,94,0.15)';
+        transEl.style.display = '';
+        transEl.style.color = color;
+        transEl.style.background = bg;
+        transEl.textContent = name;
+      } else {
+        transEl.style.display = 'none';
+      }
+```
+
+The badge color and initials map to the speaker key. The transition indicator only appears on the slide *right before* a handoff — gives the current speaker a heads-up that the next slide belongs to their co-presenter.
 
 ## Critical Implementation Notes
 
@@ -278,6 +391,18 @@ window.talkTrack = talkTrack;
 ### 3. Inject popup script after `doc.close()`
 
 Scripts written inside `doc.write()` run before the document is fully built. Instead, create a `<script>` element via DOM and append it after `doc.close()`. This ensures the popup's DOM is ready and avoids the nested `</script>` problem entirely.
+
+### 4. Persist timer across script reinjection
+
+The presenter script runs in the popup window and defines a local `timerInterval` variable. When `injectPresenterScript()` is called a second time (auto-recovery or `Shift+R`), a new script element runs in a fresh execution context and `timerInterval` is `undefined` again — which would start a duplicate timer. Stash it on the popup's `window` object instead:
+
+```javascript
+var timerInterval = window._timerInterval || null;
+// ... when starting the timer:
+window._timerInterval = timerInterval;
+```
+
+The reinjected script reads the existing `_timerInterval`, sees it's already running, and doesn't start a new one.
 
 ## Next Slide Preview
 

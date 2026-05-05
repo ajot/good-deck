@@ -222,6 +222,48 @@ Each talk track entry should be broken into **scannable bullets** using `<div cl
 <div class="talk-line">Everything else — completely identical.</div>`
 ```
 
+## Speaker Label (Optional, Multi-Presenter Decks)
+
+For decks with two or more presenters, you can show a colored speaker label above the talk track on each slide. Pairs with the `speakerMap` defined in `presenter-view.md` → "Speaker Badges in Header".
+
+### CSS
+
+Add inside your `.practice-body` styles:
+
+```css
+.practice-body .speaker-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.practice-body .speaker-label.april { color: #4d9aff; }
+.practice-body .speaker-label.amit  { color: #22c55e; }
+```
+
+### Render in `updatePractice()`
+
+Replace the `body.innerHTML = ...` line with a version that prepends the speaker label:
+
+```javascript
+function updatePractice() {
+  if (!practiceOpen) return;
+  const body = document.getElementById('practiceBody');
+  const track = talkTrack[current];
+  const speakerKey = speakerMap[current];
+  const speakerHtml = speakerKey
+    ? `<div class="speaker-label ${speakerKey}">${speakerKey === 'april' ? 'April' : 'Amit'}</div>`
+    : '';
+  body.innerHTML = '<div class="practice-slide-label">Slide ' + current + '</div>'
+    + speakerHtml
+    + (track || '<span style="color: var(--text-muted);">No talk track for this slide.</span>');
+  // ... rest of next-slide preview unchanged
+}
+```
+
+The same `speakerMap` also drives the presenter popup's header badge — define it once and both views stay in sync.
+
 ## Important CSS Notes
 
 - Use `display: inline` on `.practice-body em` — without it, `<em>` inside flex/block containers can break text flow
